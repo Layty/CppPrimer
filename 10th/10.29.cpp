@@ -1,5 +1,8 @@
 /*
 编写程序，使用流迭代器读取一个文本文件，存入一个vector中的string里
+ 1:  vector<string> v(in_iter, eof_f);
+ 2: copy(in_iter, eof_f, back_inserter(vec));
+
 */
 #include <fstream>
 #include <iterator>

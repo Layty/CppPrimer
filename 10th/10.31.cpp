@@ -1,5 +1,7 @@
-/*使用流迭代器、sort和copy从标准输入读取一个整数序列，将其排序，并将结果写到标准输出
+/*
+修改前一题的程序，使其只打印不重复的元素。你的程序应使用unique_copy
 */
+
 #include "include.h"
 #include <iterator>
 
@@ -9,7 +11,8 @@ int main(int argc, char const *argv[])
     ostream_iterator<int> out(cout, ",");
     vector<int> v(in, eof);
     sort(v.begin(), v.end());
-    copy(v.begin(), v.end(), out);
+    //_copy(v.begin(), v.end(), out);
+    unique_copy(v.begin(), v.end(), out);
 
     while (1)
         ;

@@ -1,5 +1,6 @@
 /*
-    13.34设计自己的message 类和 Folder 类
+    13.49 实现自己的move操作,注意,我这里增加了 string ID,在move操作的时候一定要加上对他的操作
+    13.34 设计自己的message 类和 Folder 类
 
     message 可以被多个Folder 所包含 ,一个Folder 包含多个 message
     Message 拷贝构造的时候,需要复制folder,同时往folder添加
@@ -26,10 +27,14 @@ private:
     string msg_raw;
     set<Folder *> folder_list;
 
+    void move_Folder(Message *m);
+
 public:
     Message(const string &msg = "") : msg_raw(msg), Id(msg) {}
     Message(const Message &s);
     Message &operator=(const Message &s);
+    Message &operator=(Message &&s) noexcept;
+    Message(Message &&s) noexcept;
 
     ~Message();
 
@@ -104,6 +109,34 @@ Message &Message::operator=(const Message &s)
     return *this;
 }
 
+//从m 中移动信息,并释放m自身的消息
+void Message::move_Folder(Message *m)
+{
+    folder_list = std::move(m->folder_list);
+    for (auto f : folder_list)
+    {
+        f->del_msg(*m);
+        f->add_msg(*this);
+    }
+    m->folder_list.clear(); //m原本的析构
+}
+
+Message::Message(Message &&s) noexcept : msg_raw(std::move(s.msg_raw)), Id(std::move(s.Id))
+{
+    std::cout << " **move construct**" << std::endl;
+    move_Folder(&s);
+}
+Message &Message::operator=(Message &&s) noexcept
+{
+    std::cout << " **move operator=**" << std::endl;
+    if (this == &s)
+        return *this;
+    msg_raw = std::move(s.msg_raw);
+    Id = std::move(s.Id);
+    move_Folder(&s);
+    return *this;
+}
+
 //-----------------------------------Folder----------------------------------------------
 //
 //
@@ -165,33 +198,46 @@ int main(int argc, char const *argv[])
     // // 执行msg的析构,删除消息
     // root.print(cout);
 
-    Folder root("root");
-    Folder root2("root2");
-    Message Q("msg_Q");
-    Q.add_to_folder(root2);
-    root2.print(cout);
+    // Folder root("root");
+    // Folder root2("root2");
+    // Message Q("msg_Q");
+    // Q.add_to_folder(root2);
+    // root2.print(cout);
+    // {
+    //     Message A("msg_A");
+    //     Message B("msg_B");
+    //     Message C(A);
+    //     Message D("msg_D");
+    //     A.add_to_folder(root);
+    //     B.add_to_folder(root);
+    //     C.add_to_folder(root);
+    //     D.add_to_folder(root);
+    //     root.print(cout);
+    //     D = B;
+    //     root.print(cout);
+    //     A = A;
+    //     root.print(cout);
+
+    //     cout << "-----swap----" << endl;
+    //     swap(A, Q);
+    //     root.print(cout);
+    //     root2.print(cout);
+    // }
+    // root.print(cout);
     {
+
+        Folder root("root");
         Message A("msg_A");
-        Message B("msg_B");
-        Message C(A);
-        Message D("msg_D");
+        Message B((Message("__move_construct__")));
+        Message C("msg_C");
+        Message D = std::move(C);
+
         A.add_to_folder(root);
         B.add_to_folder(root);
-        C.add_to_folder(root);
         D.add_to_folder(root);
-        root.print(cout);
-        D = B;
-        root.print(cout);
-        A = A;
-        root.print(cout);
 
-        cout << "-----swap----" << endl;
-        swap(A, Q);
         root.print(cout);
-        root2.print(cout);
     }
-    root.print(cout);
-
     while (1)
         ;
     return 0;

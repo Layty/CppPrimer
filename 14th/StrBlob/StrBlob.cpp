@@ -129,18 +129,28 @@ int main(int argc, char const *argv[])
         for (auto i = ls.begin(); i != ls.end(); i++)
         {
             std::cout << *i << ",";
+            std::cout << std::endl
+                      << "size= " << i->size() << std::endl;
             *i = "(" + *i + ")";
         }
+
         for (auto i = ls.begin(); i != ls.end(); i++)
+        {
             std::cout << *i << ",";
+            std::cout << std::endl
+                      << "size= " << i->size() << std::endl;
+        }
 
         for (auto i = ls.cbegin(); i != ls.cend(); i++)
         {
             std::cout << *i << ",";
+            std::cout << std::endl
+                      << "size= " << i->size() << std::endl;
             //*i = "(" + *i + ")"; // does not match any in class
             // inline string &ConstStrBlobPtr::operator[](size_t offset)
             // 只有 const string
         }
+
         /* code */
     }
     catch (const std::exception &e)

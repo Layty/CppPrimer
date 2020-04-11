@@ -167,6 +167,10 @@ public:
     const string &operator[](size_t) const;
     string &operator*();
     const string &operator*() const;
+
+    // 迭代器指向string 那么 *it 是string 而 it-> 自然是string的操作了
+    string *operator->();
+    const string *operator->() const;
 };
 inline shared_ptr<vector<string>> StrBlobPtr::check(size_t at, string err_msg) const
 {
@@ -248,6 +252,16 @@ inline const string &StrBlobPtr::operator*() const
     return (*this)[curr];
 }
 
+// 迭代器指向string 那么 *it 是string 而 it-> 自然是string的操作了
+inline string *StrBlobPtr::operator->()
+{
+    return &(this->operator*());
+}
+inline const string *StrBlobPtr::operator->() const
+{
+    return &(this->operator*());
+}
+
 // 个人觉得应该是 非const的迭代器继承自const的迭代器 const_iterator
 // --这里的const 是指不能通过该迭代器修改指向的内容
 /**
@@ -286,6 +300,8 @@ public:
     const string &operator[](size_t) const;
     //string &operator*();
     const string &operator*() const;
+    //string *operator->();  --这里的const 是指不能通过该迭代器修改指向的内容
+    const string *operator->() const;
 };
 inline shared_ptr<vector<string>> ConstStrBlobPtr::check(size_t at, string err_msg) const
 {
@@ -365,6 +381,12 @@ inline const string &ConstStrBlobPtr::operator[](size_t offset) const
 inline const string &ConstStrBlobPtr::operator*() const
 {
     return (*this)[curr];
+}
+
+// 迭代器指向string 那么 *it 是string 而 it-> 自然是string的操作了
+inline const string *ConstStrBlobPtr::operator->() const
+{
+    return &(this->operator*());
 }
 
 #endif // !__STR_BLOB_H__

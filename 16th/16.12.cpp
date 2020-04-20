@@ -6,14 +6,40 @@
 #include <iostream>
 #include <initializer_list>
 #include <exception>
+#include <algorithm>
 
 template <typename T>
 class BlobPtr;
+template <typename T>
+class Blob;
+
+template <typename T>
+bool operator==(const Blob<T> &a, const Blob<T> &b);
+template <typename T>
+bool operator!=(const Blob<T> &a, const Blob<T> &b);
+template <typename T>
+bool operator<(const Blob<T> &a, const Blob<T> &b);
+template <typename T>
+bool operator>(const Blob<T> &a, const Blob<T> &b);
+template <typename T>
+bool operator<=(const Blob<T> &a, const Blob<T> &b);
+template <typename T>
+bool operator>=(const Blob<T> &a, const Blob<T> &b);
 
 template <typename T>
 class Blob
 {
     friend BlobPtr<T>;
+
+    friend bool operator==<T>(const Blob<T> &a, const Blob<T> &b);
+    friend bool operator!=<T>(const Blob<T> &a, const Blob<T> &b);
+    // clang-format off
+    friend bool operator< <T>(const Blob<T> &a, const Blob<T> &b);
+    friend bool operator> <T>(const Blob<T> &a, const Blob<T> &b);
+    // clang-format on
+    friend bool operator<=<T>(const Blob<T> &a, const Blob<T> &b);
+    friend bool operator>=<T>(const Blob<T> &a, const Blob<T> &b);
+
     // 以下两个应该是为了外部方便获取类型
     typedef T value_type;
     typedef typename std::vector<T>::size_type size_type;
@@ -23,7 +49,14 @@ private:
     void check(size_type i, const std::string &msg) const;
 
 public:
-    Blob() : data(std::make_shared<std::vector<T>>()) { std::cout << "init None" << std::endl; }
+    Blob() : data(std::make_shared<std::vector<T>>()) {}
+
+    Blob(const Blob<T> &s) : data(std::make_shared<std::vector<T>>(*s.data)) {}
+    Blob(Blob<T> &&a) noexcept : data(std::move(a.data)) {}
+
+    Blob &operator=(const Blob<T> &s);
+    Blob &operator=(Blob<T> &&) noexcept;
+
     Blob(std::initializer_list<T> il) : data(std::make_shared<std::vector<T>>(il)) {}
     size_type size() const { return data->size(); }
     bool empty() const { return data->empty(); }
@@ -33,13 +66,36 @@ public:
     void pop_back();
 
     T &back();
+    const T &back() const;
+    T &front();
+    const T &front() const;
+
     T &operator[](size_type i);
+    const T &operator[](size_type i) const;
 
     BlobPtr<T> begin();
     BlobPtr<T> end();
 
     void print(std::ostream &o);
 };
+
+template <typename T>
+Blob<T> &Blob<T>::operator=(const Blob<T> &s)
+{
+    data = std::make_shared<std::vector<T>>(*s.data);
+    return *this;
+}
+
+template <typename T>
+Blob<T> &Blob<T>::operator=(Blob<T> &&s) noexcept
+{
+    if (this != s)
+    {
+        data = std::move(s.data);
+        s.data = nullptr;
+    }
+    return *this;
+}
 
 template <typename T>
 void Blob<T>::print(std::ostream &o)
@@ -72,7 +128,34 @@ T &Blob<T>::back()
     return data->back();
 }
 template <typename T>
+const T &Blob<T>::back() const
+{
+    check(0, "Get empty Back()");
+    return data->back();
+}
+
+template <typename T>
+T &Blob<T>::front()
+{
+    check(0, "Get empty front()");
+    return data->front();
+}
+template <typename T>
+const T &Blob<T>::front() const
+{
+    check(0, "Get empty front()");
+    return data->front();
+}
+
+template <typename T>
 T &Blob<T>::operator[](size_type i)
+{
+    check(i, "Get [" + std::to_string(i) + "]");
+    return data->at(i);
+}
+
+template <typename T>
+const T &Blob<T>::operator[](size_type i) const
 {
     check(i, "Get [" + std::to_string(i) + "]");
     return data->at(i);
@@ -89,11 +172,55 @@ BlobPtr<T> Blob<T>::end()
     return BlobPtr<T>(*this, size());
 }
 
+//****************************************************************************
+template <typename T>
+bool operator==(const Blob<T> &a, const Blob<T> &b)
+{
+    return (*a.data == *b.data);
+}
+template <typename T>
+operator!=(const Blob<T> &a, const Blob<T> &b)
+{
+    return !(a == b);
+}
+
+template <typename T>
+operator<(const Blob<T> &a, const Blob<T> &b)
+{
+    return std::lexicographical_compare(a.data->begin(), a.data->end(), b.data->begin(), b.data->end());
+}
+
+template <typename T>
+operator>(const Blob<T> &a, const Blob<T> &b)
+{
+    return (b < a);
+}
+template <typename T>
+operator<=(const Blob<T> &a, const Blob<T> &b)
+{
+    return !(b > a);
+}
+template <typename T>
+operator>=(const Blob<T> &a, const Blob<T> &b)
+{
+    return !(a < b);
+}
+
+//****************************************************************************
 // 定义 Blob::iterator
+
 template <typename T>
 bool operator==(const BlobPtr<T> &, const BlobPtr<T> &);
 template <typename T>
 bool operator!=(const BlobPtr<T> &, const BlobPtr<T> &);
+template <typename T>
+bool operator<(const BlobPtr<T> &, const BlobPtr<T> &);
+template <typename T>
+bool operator>(const BlobPtr<T> &, const BlobPtr<T> &);
+template <typename T>
+bool operator<=(const BlobPtr<T> &, const BlobPtr<T> &);
+template <typename T>
+bool operator>=(const BlobPtr<T> &, const BlobPtr<T> &);
 
 template <typename T>
 class BlobPtr
@@ -106,14 +233,20 @@ private:
 public:
     friend bool operator==<T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
     friend bool operator!=<T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
+    // clang-format off
+    friend bool operator< <T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
+    friend bool operator> <T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
+    friend bool operator<=<T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
+    friend bool operator>=<T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
+    // clang-format on
 
     BlobPtr() : curr(0) {}
     BlobPtr(const Blob<T> &pt, size_t at = 0) : wptr(pt.data), curr(at) {}
-    std::string &operator*()
+    T &operator*()
     {
         return check(curr, "Get elem[] out of range")->at(curr);
     }
-    std::string &operator[](size_t at)
+    T &operator[](size_t at)
     {
         return check(at, "Get elem[] out of range")->at(at);
     }
@@ -121,6 +254,10 @@ public:
     BlobPtr operator++(int);
     BlobPtr operator--();
     BlobPtr operator--(int);
+    BlobPtr &operator+=(size_t);
+    BlobPtr &operator-=(size_t);
+    BlobPtr operator+(size_t) const;
+    BlobPtr operator-(size_t) const;
 };
 
 template <typename T>
@@ -171,6 +308,38 @@ BlobPtr<T> BlobPtr<T>::operator--(int)
 }
 
 template <typename T>
+BlobPtr<T> &BlobPtr<T>::operator+=(size_t off)
+{
+    curr += off;
+    check(curr, "increment past end of Blob<T>Ptr");
+    return *this;
+}
+template <typename T>
+BlobPtr<T> &BlobPtr<T>::operator-=(size_t off)
+{
+    curr -= off;
+    check(curr, "increment past end of Blob<T>Ptr");
+    return *this;
+}
+
+template <typename T>
+BlobPtr<T> BlobPtr<T>::operator+(size_t off) const
+{
+    BlobPtr<T> ret = *this;
+    ret += off;
+    return ret;
+}
+
+template <typename T>
+BlobPtr<T> BlobPtr<T>::operator-(size_t off) const
+{
+    BlobPtr<T> ret = *this;
+    ret -= off;
+    return ret;
+}
+
+//***********            friend           *******************************//
+template <typename T>
 bool operator==(const BlobPtr<T> &a, const BlobPtr<T> &b)
 {
     return (a.curr == b.curr);
@@ -180,6 +349,28 @@ bool operator!=(const BlobPtr<T> &a, const BlobPtr<T> &b)
 {
     return !(a == b);
 }
+
+template <typename T>
+bool operator<(const BlobPtr<T> &a, const BlobPtr<T> &b)
+{
+    return (a.curr < b.curr);
+}
+template <typename T>
+bool operator>(const BlobPtr<T> &a, const BlobPtr<T> &b)
+{
+    return (b < a);
+}
+template <typename T>
+bool operator<=(const BlobPtr<T> &a, const BlobPtr<T> &b)
+{
+    return !(a > b);
+}
+template <typename T>
+bool operator>=(const BlobPtr<T> &a, const BlobPtr<T> &b)
+{
+    return !(a < b);
+}
+
 // template <typename T>
 // std::ostream &operator<<(std::ostream &o, const T &Blob_val)
 // {

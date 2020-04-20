@@ -32,6 +32,7 @@ template <typename T>
 class Blob
 {
     friend BlobPtr<T>;
+    friend ConstBlobPtr<T>;
 
     friend bool operator==<T>(const Blob<T> &a, const Blob<T> &b);
     friend bool operator!=<T>(const Blob<T> &a, const Blob<T> &b);
@@ -77,6 +78,9 @@ public:
 
     BlobPtr<T> begin();
     BlobPtr<T> end();
+
+    ConstBlobPtr<T> cbegin() const;
+    ConstBlobPtr<T> cend() const;
 
     void print(std::ostream &o);
 };
@@ -172,6 +176,17 @@ template <typename T>
 BlobPtr<T> Blob<T>::end()
 {
     return BlobPtr<T>(*this, size());
+}
+
+template <typename T>
+ConstBlobPtr<T> Blob<T>::cbegin() const
+{
+    return ConstBlobPtr<T>(*this);
+}
+template <typename T>
+ConstBlobPtr<T> Blob<T>::cend() const
+{
+    return ConstBlobPtr<T>(*this, size());
 }
 
 //****************************************************************************

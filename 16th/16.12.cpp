@@ -12,6 +12,8 @@ template <typename T>
 class BlobPtr;
 template <typename T>
 class Blob;
+template <typename T>
+class ConstBlobPtr;
 
 template <typename T>
 bool operator==(const Blob<T> &a, const Blob<T> &b);
@@ -250,6 +252,22 @@ public:
     {
         return check(at, "Get elem[] out of range")->at(at);
     }
+    const T &operator*() const
+    {
+        return check(curr, "Get elem[] out of range")->at(curr);
+    }
+    const T &operator[](size_t at) const
+    {
+        return check(at, "Get elem[] out of range")->at(at);
+    }
+    const T *operator->() const
+    {
+        return &this->operator*();
+    }
+    T *operator->()
+    {
+        return &this->operator*();
+    }
     BlobPtr operator++();
     BlobPtr operator++(int);
     BlobPtr operator--();
@@ -376,6 +394,175 @@ bool operator>=(const BlobPtr<T> &a, const BlobPtr<T> &b)
 // {
 
 // }
+
+//****************************************************************************
+// 定义 Blob::iterator
+
+template <typename T>
+bool operator==(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+template <typename T>
+bool operator!=(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+template <typename T>
+bool operator<(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+template <typename T>
+bool operator>(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+template <typename T>
+bool operator<=(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+template <typename T>
+bool operator>=(const ConstBlobPtr<T> &, const ConstBlobPtr<T> &);
+
+template <typename T>
+class ConstBlobPtr
+{
+private:
+    std::weak_ptr<std::vector<T>> wptr;
+    std::size_t curr;
+    std::shared_ptr<std::vector<T>> check(size_t i, const std::string &msg);
+
+public:
+    friend bool operator==<T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    friend bool operator!=<T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    // clang-format off
+    friend bool operator< <T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    friend bool operator> <T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    friend bool operator<=<T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    friend bool operator>=<T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
+    // clang-format on
+
+    ConstBlobPtr() : curr(0) {}
+    ConstBlobPtr(const Blob<T> &pt, size_t at = 0) : wptr(pt.data), curr(at) {}
+    const T &operator*() const
+    {
+        return check(curr, "Get elem[] out of range")->at(curr);
+    }
+    const T &operator[](size_t at) const
+    {
+        return check(at, "Get elem[] out of range")->at(at);
+    }
+    const T *operator->() const
+    {
+        return &this->operator*();
+    }
+    ConstBlobPtr operator++();
+    ConstBlobPtr operator++(int);
+    ConstBlobPtr operator--();
+    ConstBlobPtr operator--(int);
+    ConstBlobPtr &operator+=(size_t);
+    ConstBlobPtr &operator-=(size_t);
+    ConstBlobPtr operator+(size_t) const;
+    ConstBlobPtr operator-(size_t) const;
+};
+
+template <typename T>
+std::shared_ptr<std::vector<T>> ConstBlobPtr<T>::check(size_t i, const std::string &msg)
+{
+    auto spt = wptr.lock();
+    if (spt)
+    { // 使用之前必须复制到 shared_ptr
+        if (i >= spt->size())
+            throw std::out_of_range(msg);
+    }
+    else
+    {
+        throw std::runtime_error("unbound Blob<T>Ptr");
+    }
+    return spt;
+}
+
+// 前置++,先++,再返回
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator++()
+{
+    check(curr, "++");
+    curr++;
+    return *this;
+}
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator++(int)
+{
+    auto ret = *this;
+    ++*this;
+    return *this;
+}
+// 前置++,先++,再返回
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator--()
+{
+    check(curr, "--");
+    curr--;
+    return *this;
+}
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator--(int)
+{
+    auto ret = *this;
+    --*this;
+    return *this;
+}
+
+template <typename T>
+ConstBlobPtr<T> &ConstBlobPtr<T>::operator+=(size_t off)
+{
+    curr += off;
+    check(curr, "increment past end of Blob<T>Ptr");
+    return *this;
+}
+template <typename T>
+ConstBlobPtr<T> &ConstBlobPtr<T>::operator-=(size_t off)
+{
+    curr -= off;
+    check(curr, "increment past end of Blob<T>Ptr");
+    return *this;
+}
+
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator+(size_t off) const
+{
+    ConstBlobPtr<T> ret = *this;
+    ret += off;
+    return ret;
+}
+
+template <typename T>
+ConstBlobPtr<T> ConstBlobPtr<T>::operator-(size_t off) const
+{
+    ConstBlobPtr<T> ret = *this;
+    ret -= off;
+    return ret;
+}
+
+//***********            friend           *******************************//
+template <typename T>
+bool operator==(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return (a.curr == b.curr);
+}
+template <typename T>
+bool operator!=(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return !(a == b);
+}
+
+template <typename T>
+bool operator<(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return (a.curr < b.curr);
+}
+template <typename T>
+bool operator>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return (b < a);
+}
+template <typename T>
+bool operator<=(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return !(a > b);
+}
+template <typename T>
+bool operator>=(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b)
+{
+    return !(a < b);
+}
 
 int main(int argc, char const *argv[])
 {

@@ -196,29 +196,29 @@ bool operator==(const Blob<T> &a, const Blob<T> &b)
     return (*a.data == *b.data);
 }
 template <typename T>
-operator!=(const Blob<T> &a, const Blob<T> &b)
+bool operator!=(const Blob<T> &a, const Blob<T> &b)
 {
     return !(a == b);
 }
 
 template <typename T>
-operator<(const Blob<T> &a, const Blob<T> &b)
+bool operator<(const Blob<T> &a, const Blob<T> &b)
 {
     return std::lexicographical_compare(a.data->begin(), a.data->end(), b.data->begin(), b.data->end());
 }
 
 template <typename T>
-operator>(const Blob<T> &a, const Blob<T> &b)
+bool operator>(const Blob<T> &a, const Blob<T> &b)
 {
     return (b < a);
 }
 template <typename T>
-operator<=(const Blob<T> &a, const Blob<T> &b)
+bool operator<=(const Blob<T> &a, const Blob<T> &b)
 {
     return !(b > a);
 }
 template <typename T>
-operator>=(const Blob<T> &a, const Blob<T> &b)
+bool operator>=(const Blob<T> &a, const Blob<T> &b)
 {
     return !(a < b);
 }
@@ -245,7 +245,7 @@ class BlobPtr
 private:
     std::weak_ptr<std::vector<T>> wptr;
     std::size_t curr;
-    std::shared_ptr<std::vector<T>> check(size_t i, const std::string &msg);
+    std::shared_ptr<std::vector<T>> check(size_t i, const std::string &msg) const;
 
 public:
     friend bool operator==<T>(const BlobPtr<T> &a, const BlobPtr<T> &b);
@@ -294,7 +294,7 @@ public:
 };
 
 template <typename T>
-std::shared_ptr<std::vector<T>> BlobPtr<T>::check(size_t i, const std::string &msg)
+std::shared_ptr<std::vector<T>> BlobPtr<T>::check(size_t i, const std::string &msg) const
 {
     auto spt = wptr.lock();
     if (spt)
@@ -432,7 +432,7 @@ class ConstBlobPtr
 private:
     std::weak_ptr<std::vector<T>> wptr;
     std::size_t curr;
-    std::shared_ptr<std::vector<T>> check(size_t i, const std::string &msg);
+    std::shared_ptr<std::vector<T>> check(size_t i, const std::string &msg) const;
 
 public:
     friend bool operator==<T>(const ConstBlobPtr<T> &a, const ConstBlobPtr<T> &b);
@@ -469,7 +469,7 @@ public:
 };
 
 template <typename T>
-std::shared_ptr<std::vector<T>> ConstBlobPtr<T>::check(size_t i, const std::string &msg)
+std::shared_ptr<std::vector<T>> ConstBlobPtr<T>::check(size_t i, const std::string &msg) const
 {
     auto spt = wptr.lock();
     if (spt)
@@ -610,6 +610,23 @@ int main(int argc, char const *argv[])
     catch (const std::exception &msg)
     {
         std::cout << msg.what() << std::endl;
+    }
+
+    {
+        Blob<std::string> sb1{"a", "b", "c"};
+        Blob<std::string> sb2 = sb1;
+
+        sb2[2] = "b";
+
+        if (sb1 > sb2)
+        {
+            for (auto iter = sb2.cbegin(); iter != sb2.cend(); ++iter)
+                std::cout << *iter << " ";
+            std::cout << std::endl;
+        }
+
+        ConstBlobPtr<std::string> iter(sb2);
+        std::cout << iter->size() << std::endl;
     }
 
     while (1)

@@ -1,9 +1,20 @@
+
+## API查询 
+https://zh.cppreference.com/w/cpp/language
+https://devdocs.io
+https://msdn.microsoft.com/zh-cn/library/3bstk3k5.aspx
+
+
 ## 我的博客,含有文字答案 
-
-
 [https://www.cnblogs.com/zongzi10010/](https://www.cnblogs.com/zongzi10010/)
 
-
+## 抄袭的答案(按顺序查询最好)
+- https://github.com/pezy/CppPrimer
+- https://github.com/Mooophy/Cpp-Primer
+- https://github.com/huangmingchuan/Cpp_Primer_Answers
+- https://blog.csdn.net/misayaaaaa/article/details/53786215
+- https://blog.csdn.net/shamozhizhoutx/article/details/81264498
+- https://blog.csdn.net/chxw098/article/details/39973555
 
 ## Tudo
 
